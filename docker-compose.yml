@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    container_name: cinema_session_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    # Este microservicio no necesita base de datos: las sesiones grupales
+    # viven en memoria mientras el contenedor está corriendo.

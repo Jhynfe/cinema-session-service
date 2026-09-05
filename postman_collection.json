@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Cinema Session Service",
+    "description": "Colección para probar el microservicio de sesiones grupales de cine. Antes de correrla, define en el Environment: base_url, host_token, guest_token (usa generate_test_token.py para obtenerlos).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8001/api/v1" },
+    { "key": "host_token", "value": "PEGA_AQUI_EL_TOKEN_DEL_HOST" },
+    { "key": "guest_token", "value": "PEGA_AQUI_EL_TOKEN_DEL_GUEST" },
+    { "key": "session_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "2. Crear sala (host)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const data = pm.response.json();",
+              "pm.collectionVariables.set('session_id', data.id);",
+              "pm.test('201 creado', () => pm.response.to.have.status(201));",
+              "pm.test('host_id correcto', () => pm.expect(data.host_id).to.eql(1));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{host_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/sessions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"movie_id\": 42,\n  \"title\": \"Noche de prueba\",\n  \"max_participants\": 10\n}"
+        }
+      }
+    },
+    {
+      "name": "3. Listar salas",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sessions"
+      }
+    },
+    {
+      "name": "4. Ver detalle de la sala",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sessions/{{session_id}}"
+      }
+    },
+    {
+      "name": "5. Guest se une a la sala",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('201 unido', () => pm.response.to.have.status(201));",
+              "pm.test('2 participantes', () => pm.expect(pm.response.json().participant_count).to.eql(2));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{guest_token}}" }
+        ],
+        "url": "{{base_url}}/sessions/{{session_id}}/members"
+      }
+    },
+    {
+      "name": "6. Guest intenta mover playback (debe dar 403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('403 prohibido - solo HOST controla playback', () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{guest_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/sessions/{{session_id}}/playback",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_playing\": true,\n  \"position_seconds\": 5\n}"
+        }
+      }
+    },
+    {
+      "name": "7. Host mueve playback (200 OK)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('status PLAYING', () => pm.expect(pm.response.json().status).to.eql('PLAYING'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{host_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/sessions/{{session_id}}/playback",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_playing\": true,\n  \"position_seconds\": 30.5\n}"
+        }
+      }
+    },
+    {
+      "name": "8. Listar miembros de la sala",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sessions/{{session_id}}/members"
+      }
+    },
+    {
+      "name": "9. Guest sale de la sala",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 sin contenido', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{guest_token}}" }
+        ],
+        "url": "{{base_url}}/sessions/{{session_id}}/members/me"
+      }
+    },
+    {
+      "name": "10. Host termina la sesion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('204 sin contenido', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{host_token}}" }
+        ],
+        "url": "{{base_url}}/sessions/{{session_id}}"
+      }
+    },
+    {
+      "name": "11. Verificar que ya no existe (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 no encontrada', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/sessions/{{session_id}}"
+      }
+    }
+  ]
+}
