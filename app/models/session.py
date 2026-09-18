@@ -43,6 +43,7 @@ class CinemaSession:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     participants: dict[int, Participant] = field(default_factory=dict)
+    messages: list[dict] = field(default_factory=list)
 
     def touch(self) -> None:
         self.updated_at = datetime.now(timezone.utc)

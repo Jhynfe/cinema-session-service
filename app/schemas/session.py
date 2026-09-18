@@ -48,3 +48,17 @@ class ChatMessage(BaseModel):
     user_id: int
     message: str = Field(min_length=1, max_length=500)
     sent_at: datetime
+
+class ChatMessageCreate(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+
+class ChatMessageRead(BaseModel):
+    id: str
+    user_id: str
+    message: str
+    sent_at: datetime
+    
+class SessionStateRead(BaseModel):
+    is_playing: bool
+    position_seconds: float
+    messages: list[ChatMessageRead]

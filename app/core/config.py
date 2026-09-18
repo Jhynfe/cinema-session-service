@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
 
+    # Consumo de otros microservicios
+    CATALOG_SERVICE_URL: str = "http://catalog-api:8081"
+    COMMUNITY_SERVICE_URL: str = "http://community-api:8000"
+    INTERACTION_SERVICE_URL: str = "http://interaction-api:8082"
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 

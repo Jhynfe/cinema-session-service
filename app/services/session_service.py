@@ -1,3 +1,4 @@
+import requests
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -22,9 +23,21 @@ class SessionService:
     # ---- Sesiones -------------------------------------------------
 
     def create_session(self, payload: SessionCreate, host_id: int) -> CinemaSession:
+        # 1. Consumir Catalog Service para validar que la película existe
+        # Esto cumple con el requisito de "consumir otro microservicio"
+        try:
+            resp = requests.get(f"{settings.CATALOG_SERVICE_URL}/api/catalog/movies/{payload.movie_id}")
+            if resp.status_code != 200:
+                raise HTTPException(status_code=400, detail="La película no existe en el catálogo")
+            catalog_movie = resp.json()
+            movie_title = catalog_movie.get("title", payload.title)
+        except requests.RequestException:
+            raise HTTPException(status_code=503, detail="No se pudo validar la película con Catalog Service")
+
         session = CinemaSession(
             movie_id=payload.movie_id,
-            title=payload.title,
+            title=movie_title,
+            
             host_id=host_id,
             max_participants=payload.max_participants or settings.MAX_PARTICIPANTS_PER_SESSION,
         )
@@ -123,9 +136,19 @@ class SessionService:
 
     async def send_chat_message(self, session_id: str, user_id: int, message: str) -> None:
         session = self.get_session(session_id)
-        if user_id not in session.participants:
-            raise HTTPException(status_code=403, detail="No perteneces a esta sesión")
+        
+        # Guardar en memoria (Plan B: Polling)
+        msg_obj = {
+            "id": str(datetime.now(timezone.utc).timestamp()),
+            "user_id": str(user_id),
+            "message": message,
+            "sent_at": datetime.now(timezone.utc).isoformat()
+        }
+        session.messages.append(msg_obj)
+        if len(session.messages) > 50:
+            session.messages.pop(0)
 
+        # Broadcast via WS (Opcional, se mantiene si WS llega a funcionar)
         await self.manager.broadcast(
             session_id,
             {
