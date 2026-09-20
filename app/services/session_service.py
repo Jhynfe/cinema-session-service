@@ -50,7 +50,9 @@ class SessionService:
     def get_session(self, session_id: str) -> CinemaSession:
         session = self.repository.get(session_id)
         if not session:
-            raise HTTPException(status_code=404, detail="Sesión no encontrada")
+            # Auto-crear en RAM si no existe, ya que las salas se crean realmente en community-service
+            session = CinemaSession(id=session_id)
+            self.repository.add(session)
         return session
 
     def list_sessions(
