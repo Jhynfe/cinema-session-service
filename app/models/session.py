@@ -33,7 +33,7 @@ class CinemaSession:
     """
 
     id: str = field(default_factory=lambda: uuid4().hex[:10])
-    movie_id: int = 0
+    movie_id: str = 0
     title: str = ""
     host_id: str = 0
     status: SessionStatus = SessionStatus.WAITING

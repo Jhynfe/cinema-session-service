@@ -6,7 +6,7 @@ from app.models.session import ParticipantRole, SessionStatus
 
 
 class SessionCreate(BaseModel):
-    movie_id: int = Field(gt=0)
+    movie_id: str = Field(min_length=1)
     title: str = Field(min_length=1, max_length=150)
     max_participants: int | None = Field(default=None, ge=2, le=100)
 
@@ -21,7 +21,7 @@ class ParticipantRead(BaseModel):
 
 class SessionRead(BaseModel):
     id: str
-    movie_id: int
+    movie_id: str
     title: str
     host_id: str
     status: SessionStatus
