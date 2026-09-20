@@ -12,7 +12,7 @@ class SessionCreate(BaseModel):
 
 
 class ParticipantRead(BaseModel):
-    user_id: int
+    user_id: str
     role: ParticipantRole
     joined_at: datetime
 
@@ -23,7 +23,7 @@ class SessionRead(BaseModel):
     id: str
     movie_id: int
     title: str
-    host_id: int
+    host_id: str
     status: SessionStatus
     is_playing: bool
     position_seconds: float
@@ -45,7 +45,7 @@ class PlaybackUpdate(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    user_id: int
+    user_id: str
     message: str = Field(min_length=1, max_length=500)
     sent_at: datetime
 

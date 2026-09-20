@@ -19,4 +19,4 @@ def decode_access_token(token: str) -> int:
     user_id = payload.get("sub")
     if not user_id:
         raise InvalidTokenError("Token sin 'sub'")
-    return int(user_id)
+    return str(user_id)

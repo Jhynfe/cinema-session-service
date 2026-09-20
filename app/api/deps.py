@@ -34,7 +34,7 @@ def get_session_service(
     return SessionService(repository, manager)
 
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
+def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudieron validar las credenciales",
@@ -48,7 +48,7 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
         raise credentials_error from exc
 
 
-def get_current_user_id_ws(token: str | None) -> int:
+def get_current_user_id_ws(token: str | None) -> str:
     """Igual que get_current_user_id pero para usar en el handshake del WebSocket,
     donde el token llega como query param en vez de header Authorization."""
     if not token:

@@ -18,7 +18,7 @@ class ParticipantRole(str, enum.Enum):
 
 @dataclass
 class Participant:
-    user_id: int
+    user_id: str
     role: ParticipantRole
     joined_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -35,14 +35,14 @@ class CinemaSession:
     id: str = field(default_factory=lambda: uuid4().hex[:10])
     movie_id: int = 0
     title: str = ""
-    host_id: int = 0
+    host_id: str = 0
     status: SessionStatus = SessionStatus.WAITING
     is_playing: bool = False
     position_seconds: float = 0.0
     max_participants: int = 20
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    participants: dict[int, Participant] = field(default_factory=dict)
+    participants: dict[str, Participant] = field(default_factory=dict)
     messages: list[dict] = field(default_factory=list)
 
     def touch(self) -> None:

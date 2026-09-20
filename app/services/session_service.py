@@ -22,7 +22,7 @@ class SessionService:
 
     # ---- Sesiones -------------------------------------------------
 
-    def create_session(self, payload: SessionCreate, host_id: int) -> CinemaSession:
+    def create_session(self, payload: SessionCreate, host_id: str) -> CinemaSession:
         # 1. Consumir Catalog Service para validar que la película existe
         # Esto cumple con el requisito de "consumir otro microservicio"
         try:
@@ -38,11 +38,11 @@ class SessionService:
             movie_id=payload.movie_id,
             title=movie_title,
             
-            host_id=host_id,
+            host_id=str(host_id),
             max_participants=payload.max_participants or settings.MAX_PARTICIPANTS_PER_SESSION,
         )
         session.participants[host_id] = Participant(
-            user_id=host_id, role=ParticipantRole.HOST
+            user_id=str(host_id), role=ParticipantRole.HOST
         )
         self.repository.add(session)
         return session
@@ -58,7 +58,7 @@ class SessionService:
     ) -> list[CinemaSession]:
         return self.repository.list(status=status, skip=skip, limit=limit)
 
-    async def end_session(self, session_id: str, user_id: int) -> None:
+    async def end_session(self, session_id: str, user_id: str) -> None:
         session = self.get_session(session_id)
         self._require_host(session, user_id)
         session.status = SessionStatus.ENDED
@@ -71,7 +71,7 @@ class SessionService:
 
     # ---- Participantes ---------------------------------------------
 
-    async def join_session(self, session_id: str, user_id: int) -> CinemaSession:
+    async def join_session(self, session_id: str, user_id: str) -> CinemaSession:
         session = self.get_session(session_id)
         if session.status == SessionStatus.ENDED:
             raise HTTPException(status_code=409, detail="La sesión ya terminó")
@@ -89,7 +89,7 @@ class SessionService:
         )
         return session
 
-    async def leave_session(self, session_id: str, user_id: int) -> None:
+    async def leave_session(self, session_id: str, user_id: str) -> None:
         session = self.get_session(session_id)
         participant = session.participants.get(user_id)
         if not participant:
@@ -113,7 +113,7 @@ class SessionService:
     # ---- Playback (control del HOST) --------------------------------
 
     async def update_playback(
-        self, session_id: str, user_id: int, is_playing: bool, position_seconds: float
+        self, session_id: str, user_id: str, is_playing: bool, position_seconds: float
     ) -> CinemaSession:
         session = self.get_session(session_id)
         self._require_host(session, user_id)
@@ -134,7 +134,7 @@ class SessionService:
         )
         return session
 
-    async def send_chat_message(self, session_id: str, user_id: int, message: str) -> None:
+    async def send_chat_message(self, session_id: str, user_id: str, message: str) -> None:
         session = self.get_session(session_id)
         
         # Guardar en memoria (Plan B: Polling)
@@ -162,7 +162,7 @@ class SessionService:
     # ---- Helpers -----------------------------------------------------
 
     @staticmethod
-    def _require_host(session: CinemaSession, user_id: int) -> None:
+    def _require_host(session: CinemaSession, user_id: str) -> None:
         if session.host_id != user_id:
             raise HTTPException(
                 status_code=403, detail="Solo el HOST puede realizar esta acción"
