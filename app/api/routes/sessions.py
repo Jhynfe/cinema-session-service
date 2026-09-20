@@ -50,7 +50,7 @@ def get_session_room_stats(
     Consulta el Interaction Service para obtener stats reales.
     """
     try:
-        resp = requests.get(f"{settings.INTERACTION_SERVICE_URL}/api/v1/interactions/movies/{movie_id}/stats", timeout=2)
+        resp = requests.get(f"{settings.INTERACTION_SERVICE_URL}/api/v1/movies/{movie_id}/stats", timeout=2)
         if resp.status_code == 200:
             return resp.json()
     except Exception:
@@ -61,7 +61,7 @@ def get_session_room_stats(
 @router.post("", response_model=SessionDetailRead, status_code=status.HTTP_201_CREATED)
 def create_session(
     payload: SessionCreate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service),
 ):
     session = service.create_session(payload, host_id=current_user_id)
@@ -90,7 +90,7 @@ def get_session(
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def end_session(
     session_id: str,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service),
 ):
     await service.end_session(session_id, current_user_id)
@@ -99,7 +99,7 @@ async def end_session(
 @router.post("/{session_id}/members", response_model=SessionDetailRead, status_code=status.HTTP_201_CREATED)
 async def join_session(
     session_id: str,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service),
 ):
     session = await service.join_session(session_id, current_user_id)
@@ -117,7 +117,7 @@ def list_members(
 @router.delete("/{session_id}/members/me", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_session(
     session_id: str,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service),
 ):
     await service.leave_session(session_id, current_user_id)
@@ -127,7 +127,7 @@ async def leave_session(
 async def update_playback(
     session_id: str,
     payload: PlaybackUpdate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service),
 ):
     session = await service.update_playback(
@@ -153,7 +153,7 @@ def get_session_state(
 async def post_chat_message(
     session_id: str,
     payload: ChatMessageCreate,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
     service: SessionService = Depends(get_session_service)
 ):
     # Validar que pertenezca a la sesión y permitir enviar
