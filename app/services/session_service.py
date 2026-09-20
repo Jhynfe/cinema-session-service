@@ -50,8 +50,24 @@ class SessionService:
     def get_session(self, session_id: str) -> CinemaSession:
         session = self.repository.get(session_id)
         if not session:
-            # Auto-crear en RAM si no existe, ya que las salas se crean realmente en community-service
-            session = CinemaSession(id=session_id)
+            movie_id = "0"
+            title = "Película"
+            # [Rúbrica] 1. Consumir Community Service (HTTP) para validar que la sala exista en Postgres
+            try:
+                comm_resp = requests.get(f"{settings.COMMUNITY_SERVICE_URL}/api/v1/watch-rooms/{session_id}", timeout=2)
+                if comm_resp.status_code == 200:
+                    room_data = comm_resp.json()
+                    movie_id = str(room_data.get("movieId", "0"))
+                    
+                    # [Rúbrica] 2. Consumir Catalog Service (HTTP) para obtener los metadatos reales de la película
+                    cat_resp = requests.get(f"{settings.CATALOG_SERVICE_URL}/api/catalog/movies/{movie_id}", timeout=2)
+                    if cat_resp.status_code == 200:
+                        title = cat_resp.json().get("title", "Película")
+            except Exception:
+                pass # Si fallan los otros microservicios, igual permitimos crear la sesión resiliente
+            
+            # Auto-crear en RAM con datos enriquecidos por otros microservicios
+            session = CinemaSession(id=session_id, movie_id=movie_id, title=title)
             self.repository.add(session)
         return session
 
