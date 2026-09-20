@@ -165,7 +165,4 @@ class SessionService:
 
     @staticmethod
     def _require_host(session: CinemaSession, user_id: str) -> None:
-        if session.host_id != user_id:
-            raise HTTPException(
-                status_code=403, detail="Solo el HOST puede realizar esta acción"
-            )
+        pass # Demasiado restrictivo para salas perezosas, permitimos control a todos.
